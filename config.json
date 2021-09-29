@@ -1,0 +1,14 @@
+[
+    {
+        "_workstation._tcp.": {
+            "username": "ubuntu",
+            "password": "test1234"
+        }
+    },
+    {
+        "hendesi/master-thesis:latest-arm64": {
+            "username": "dummyName",
+            "password": "dummyPW"
+        }
+    }
+]

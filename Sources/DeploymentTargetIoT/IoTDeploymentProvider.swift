@@ -53,7 +53,6 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     public let packageRootDir: URL
     public let deploymentDir: URL
     public let webServiceArguments: [String]
-    public let configFile: URL?
     
     public let automaticRedeployment: Bool
     public let port: Int
@@ -78,8 +77,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     private var postActionMapping: [DeviceIdentifier: [(DeploymentDeviceMetadata, DeviceDiscovery.PostActionType)]] = [:]
     private let additionalConfiguration: [ConfigurationProperty: Any]
     
-    private var dockerCredentials: Credentials = .emptyCredentials
-    private var deviceCredentials: [String: Credentials] = [:]
+    private var credentialStorage: CredentialStorage
     
     internal let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
     
@@ -129,7 +127,8 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         self.webServiceArguments = webServiceArguments
         self.inputType = input
         self.port = port
-        self.configFile = configurationFile
+        
+        self.credentialStorage = CredentialStorage(from: configurationFile)
         
         // initialize empty arrays
         searchableTypes.forEach {
@@ -141,19 +140,8 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     public func run() throws {
         IoTContext.logger.notice("Starting deployment of \(productName)..")
         isRunning = true
-        if case let .dockerImage(imageName) = inputType {
-            IoTContext.logger.notice("A docker image '\(imageName)' has been specified as input. Please enter the credentials to access the docker repo.")
-            self.dockerCredentials = IoTContext.readUsernameAndPassword(for: "docker")
-        }
-        
-        if let configFile = configFile {
-            // todo
-        }
-        
-        searchableTypes.forEach { type in
-            IoTContext.logger.notice("Please enter credentials for \(type)")
-            deviceCredentials[type] = dryRun ? IoTContext.defaultCredentials : IoTContext.readUsernameAndPassword(for: type)
-        }
+
+        readCredentialsIfNeeded()
         
         IoTContext.logger.info("Searching for devices in the network")
         for type in searchableTypes {
@@ -240,7 +228,8 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     }
     
     internal func performInputRelatedActions(_ result: DiscoveryResult) throws {
-        if case .package = inputType {
+        switch inputType {
+        case .package:
             IoTContext.logger.info("Copying sources to remote")
             try copyResourcesToRemote(result)
             
@@ -249,16 +238,16 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
             
             IoTContext.logger.info("Building package on remote")
             try buildPackage(on: result.device)
-        } else if case .dockerCompose(fileURL: let fileUrl, serviceName: _, containerName: _) = inputType {
+        case .dockerCompose(fileURL: let fileUrl, serviceName: _, containerName: _):
             IoTContext.logger.info("Copying docker-compose to remote")
             try IoTContext.copyResources(
                 result.device,
                 origin: fileUrl.path,
                 destination: IoTContext.rsyncHostname(result.device, path: self.deploymentDir.path)
             )
-        } else {
+        case .dockerImage(let imageName):
             IoTContext.logger.info("A docker image was specified, so skipping copying, fetching and building..")
-            
+            let dockerCredentials = credentialStorage[imageName]
             IoTContext.logger.info("Logging into docker")
             try IoTContext.runTaskOnRemote("sudo docker login -u \(dockerCredentials.username) -p \(dockerCredentials.password)", workingDir: self.remotePackageRootDir.path, device: result.device, assertSuccess: false)
         }
@@ -277,10 +266,8 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         discovery.registerActions(
             actions
         )
-        guard let credentials = deviceCredentials[type] else {
-            throw IoTDeploymentError(description: "No credentials found for \(type)")
-        }
-        
+
+        let credentials = credentialStorage[type]
         let config: [ConfigurationProperty: Any] = [
             .username: credentials.username,
             .password: credentials.password,
@@ -369,6 +356,21 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
             device: device,
             assertSuccess: false
         )
+    }
+    
+    private func readCredentialsIfNeeded() {
+        guard !credentialStorage.readFromFile else {
+            return
+        }
+        if case let .dockerImage(imageName) = inputType {
+            IoTContext.logger.notice("A docker image '\(imageName)' has been specified as input. Please enter the credentials to access the docker repo.")
+            credentialStorage[imageName] = IoTContext.readUsernameAndPassword(for: "docker")
+        }
+        
+        searchableTypes.forEach { type in
+            IoTContext.logger.notice("Please enter credentials for \(type)")
+            credentialStorage[type] = dryRun ? IoTContext.defaultCredentials : IoTContext.readUsernameAndPassword(for: type)
+        }
     }
     
     internal func deploymentNode(for result: DiscoveryResult, deployedSystem: DeployedSystem) throws -> DeployedSystemNode? {
