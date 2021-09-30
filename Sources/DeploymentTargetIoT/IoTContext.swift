@@ -145,34 +145,19 @@ enum IoTContext {
         try runTaskOnRemote(arguments, workingDir: workingDir.path, device: device)
     }
     
-    // swiftlint:disable:next function_parameter_count
-    static func runDockerCompose(
-        configFileURL: URL,
-        serviceName: String,
-        containerName: String,
-        cmd: String,
-        detached: Bool = false,
-        device: Device,
-        workingDir: URL,
-        port: Int = 8080
-    ) throws {
-        var arguments: String {
+    static func runInDockerCompose(configFileUrl: URL, envFileUrl: URL, device: Device, detached: Bool = false) throws {
+        let arguments: String = {
             [
                 "docker",
                 "compose",
                 "-f",
-                configFileURL.path,
-                "run",
-                "--rm",
-                "--name \(containerName)",
-                "-p \(port):\(port)",
-                detached ? "-d" : "",
-                "-v",
-                "\(workingDir.path):\(dockerVolumeTmpDir.path):Z",
-                serviceName,
-                cmd
+                configFileUrl.path,
+                "--env-file",
+                envFileUrl.path,
+                "up",
+                detached ? "-d" : ""
             ].joined(separator: " ")
-        }
+        }()
         print(arguments)
         try runTaskOnRemote(arguments, device: device)
     }

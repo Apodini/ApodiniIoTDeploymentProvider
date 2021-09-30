@@ -35,10 +35,14 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         /// Use the swift package for deployment
         case package
         /// Use a docker compose file for deployment
-        /// - Parameter fileURL: The URL to the compose file
-        /// - Parameter serviceName: The name of the service as specified in the compose file
-        /// - Parameter containerName: The container name as specified in the compose file
-        case dockerCompose(fileURL: URL, serviceName: String, containerName: String)
+        /// - Parameter : The URL to the compose file
+        case dockerCompose(URL)
+    }
+    
+    /// Defines the mode in which the web service is executed
+    private enum Mode {
+        case structureExport(String, URL, String, Int)
+        case startup(URL, String, String)
     }
     
     /// The identifier of the deployment provider
@@ -238,7 +242,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
             
             IoTContext.logger.info("Building package on remote")
             try buildPackage(on: result.device)
-        case .dockerCompose(fileURL: let fileUrl, serviceName: _, containerName: _):
+        case .dockerCompose(let fileUrl):
             IoTContext.logger.info("Copying docker-compose to remote")
             try IoTContext.copyResources(
                 result.device,
@@ -305,71 +309,16 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
                 privileged: true,
                 port: port
             )
-        case let .dockerCompose(_, serviceName, containerName):
+        case .dockerCompose(_):
             let volumeURL = IoTContext.dockerVolumeTmpDir.appendingPathComponent("WebServiceStructure.json")
-            try IoTContext.runDockerCompose(
-                configFileURL: composeRemoteLocation,
-                serviceName: serviceName,
-                containerName: containerName,
-                cmd: "\(flattenedWebServiceArguments) deploy startup iot \(volumeURL.path) --node-id \(node.id) --endpoint-ids \(handlerIds)",
-                detached: true,
+            let envFileUrl = try createEnvFile(for: .startup(volumeURL, node.id, handlerIds), device: device)
+            
+            try IoTContext.runInDockerCompose(
+                configFileUrl: composeRemoteLocation,
+                envFileUrl: envFileUrl,
                 device: device,
-                workingDir: deploymentDir,
-                port: port
+                detached: true
             )
-        }
-    }
-    
-    private func copyResourcesToRemote(_ result: DiscoveryResult) throws {
-        // we dont need any existing build files because we are moving to a different aarch
-        let fileManager = FileManager.default
-        if fileManager.directoryExists(atUrl: packageRootDir.appendingPathComponent(".build")) {
-            try fileManager.removeItem(at: packageRootDir.appendingPathComponent(".build"))
-        }
-        try IoTContext.copyResources(
-            result.device,
-            origin: packageRootDir.path,
-            destination: IoTContext.rsyncHostname(result.device, path: self.deploymentDir.path)
-        )
-    }
-    
-    private func fetchDependencies(on device: Device) throws {
-        try IoTContext.runTaskOnRemote(
-            "swift package update",
-            workingDir: self.remotePackageRootDir.path,
-            device: device
-        )
-    }
-    
-    private func buildPackage(on device: Device) throws {
-        try IoTContext.runTaskOnRemote(
-            "swift build -c debug --product \(self.productName)",
-            workingDir: self.remotePackageRootDir.path,
-            device: device
-        )
-    }
-    
-    private func cleanup(on device: Device) throws {
-        try IoTContext.runTaskOnRemote(
-            "sudo rm -rfv !(\"\(packageName)\")",
-            workingDir: self.deploymentDir.path,
-            device: device,
-            assertSuccess: false
-        )
-    }
-    
-    private func readCredentialsIfNeeded() {
-        guard !credentialStorage.readFromFile else {
-            return
-        }
-        if case let .dockerImage(imageName) = inputType {
-            IoTContext.logger.notice("A docker image '\(imageName)' has been specified as input. Please enter the credentials to access the docker repo.")
-            credentialStorage[imageName] = IoTContext.readUsernameAndPassword(for: "docker")
-        }
-        
-        searchableTypes.forEach { type in
-            IoTContext.logger.notice("Please enter credentials for \(type)")
-            credentialStorage[type] = dryRun ? IoTContext.defaultCredentials : IoTContext.readUsernameAndPassword(for: type)
         }
     }
     
@@ -406,16 +355,9 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
                 device: result.device,
                 workingDir: deploymentDir
             )
-        case let .dockerCompose(_, serviceName, containerName):
-            try IoTContext.runDockerCompose(
-                configFileURL: composeRemoteLocation,
-                serviceName: serviceName,
-                containerName: containerName,
-                cmd: "\(flattenedWebServiceArguments) deploy export-ws-structure iot \(fileUrl.path) --ip-address \(ipAddress) --action-keys \(actionKeys ?? "default") --port \(port) --docker",
-                device: result.device,
-                workingDir: deploymentDir,
-                port: port
-            )
+        case .dockerCompose(_):
+            let envFileUrl = try createEnvFile(for: .structureExport(actionKeys ?? "default", fileUrl, ipAddress, port), device: result.device)
+            try IoTContext.runInDockerCompose(configFileUrl: composeRemoteLocation, envFileUrl: envFileUrl, device: result.device)
         default:
             // should not happen
             break
@@ -481,6 +423,95 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         
         return (remoteFilePath, deployedSystem)
     }
+    
+// MARK: - Docker compose related methods
+    private func createEnvFile(for mode: Mode, device: Device) throws -> URL {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("deployment.env")
+        let envString: String = {
+            switch mode {
+            case let .structureExport(keys, fileURL, ipAddress, port):
+                let command = "\(flattenedWebServiceArguments) deploy export-ws-structure iot \(fileURL.path) --ip-address \(ipAddress) --action-keys \(keys) --port \(port) --docker"
+                return
+                    """
+                        ENV_FILEPATH=\(fileURL.path)
+                        ENV_COMMAND=\(command)
+                        ENV_DEPLOYPATH=\(deploymentDir.path)
+                    """
+            case let .startup(fileURL, nodeId, handlerIds):
+                let command = "\(flattenedWebServiceArguments) deploy startup iot \(fileURL.path) --node-id \(nodeId) --endpoint-ids \(handlerIds)"
+                return
+                    """
+                        ENV_FILEPATH=\(fileURL.path)
+                        ENV_COMMAND=\(command)
+                        ENV_DEPLOYPATH=\(deploymentDir.path)
+                    """
+            }
+        }()
+    
+        let data = Data(envString.utf8)
+
+        try data.write(to: url)
+        IoTContext.logger.info("Created env file at \(url.path)")
+        
+        try IoTContext.copyResources(device, origin: url.path, destination: IoTContext.rsyncHostname(device, path: self.deploymentDir.path))
+        IoTContext.logger.info("Copied it to remote")
+        
+        return self.deploymentDir.appendingPathComponent("deployment.env")
+    }
+    
+// MARK: - Miscellaneous
+    private func copyResourcesToRemote(_ result: DiscoveryResult) throws {
+        // we dont need any existing build files because we are moving to a different aarch
+        let fileManager = FileManager.default
+        if fileManager.directoryExists(atUrl: packageRootDir.appendingPathComponent(".build")) {
+            try fileManager.removeItem(at: packageRootDir.appendingPathComponent(".build"))
+        }
+        try IoTContext.copyResources(
+            result.device,
+            origin: packageRootDir.path,
+            destination: IoTContext.rsyncHostname(result.device, path: self.deploymentDir.path)
+        )
+    }
+    
+    private func fetchDependencies(on device: Device) throws {
+        try IoTContext.runTaskOnRemote(
+            "swift package update",
+            workingDir: self.remotePackageRootDir.path,
+            device: device
+        )
+    }
+    
+    private func buildPackage(on device: Device) throws {
+        try IoTContext.runTaskOnRemote(
+            "swift build -c debug --product \(self.productName)",
+            workingDir: self.remotePackageRootDir.path,
+            device: device
+        )
+    }
+    
+    private func cleanup(on device: Device) throws {
+        try IoTContext.runTaskOnRemote(
+            "sudo rm -rfv !(\"\(packageName)\")",
+            workingDir: self.deploymentDir.path,
+            device: device,
+            assertSuccess: false
+        )
+    }
+    
+    private func readCredentialsIfNeeded() {
+        guard !credentialStorage.readFromFile else {
+            return
+        }
+        if case let .dockerImage(imageName) = inputType {
+            IoTContext.logger.notice("A docker image '\(imageName)' has been specified as input. Please enter the credentials to access the docker repo.")
+            credentialStorage[imageName] = IoTContext.readUsernameAndPassword(for: "docker")
+        }
+        
+        searchableTypes.forEach { type in
+            IoTContext.logger.notice("Please enter credentials for \(type)")
+            credentialStorage[type] = dryRun ? IoTContext.defaultCredentials : IoTContext.readUsernameAndPassword(for: type)
+        }
+    }
 }
 
 private extension Array where Element == DiscoveryResult {
@@ -497,4 +528,4 @@ extension DeploymentDeviceMetadata {
     func getOptionRawValue() -> String? {
         self.value.option(for: .deploymentDevice)?.rawValue
     }
-}
+} // swiftlint:disable:this file_length

@@ -26,9 +26,9 @@ public struct KillSessionCommand: ParsableCommand {
     var types: String
     
     @Option(help: "SPM-Package/Docker-Image: Name of the deployed webservice. Docker Compose: The container name specified in the config file")
-    var productName: String
+    var productName: String?
     
-    @Flag(help: "If set, looks for the corresponding docker instance instead")
+    @Flag(help: "If set, kills ALL docker instances on the remote device.")
     var docker = false
     
     public init() {}
@@ -46,9 +46,10 @@ public struct KillSessionCommand: ParsableCommand {
                 let client = try SSHClient(username: credentials.username, password: credentials.password, ipAdress: ipAddress)
                 IoTContext.logger.info("Trying to kill session on \(ipAddress)")
                 if docker {
-                    try client.execute(cmd: "sudo docker kill \(productName)")
+                    try client.execute(cmd: "docker stop $(docker ps -a -q); docker rm $(docker ps -a -q)")
                 } else {
-                    try client.execute(cmd: "tmux kill-session -t \(productName)")
+                    precondition(productName != nil, "No value for 'productName' was provided.")
+                    try client.execute(cmd: "tmux kill-session -t \(productName!)") // swiftlint:disable:this force_unwrapping
                 }
             }
             IoTContext.logger.info("Finished.")

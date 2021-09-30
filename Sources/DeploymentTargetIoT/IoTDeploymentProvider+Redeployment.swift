@@ -126,10 +126,8 @@ extension IoTDeploymentProvider {
         switch inputType {
         case .package:
             try IoTContext.runTaskOnRemote("tmux kill-session -t \(productName)", device: device, assertSuccess: false)
-        case .dockerImage(_):
-            try IoTContext.runTaskOnRemote("sudo docker kill \(productName)", device: device, assertSuccess: false)
-        case .dockerCompose( _, _, containerName: let containerName):
-            try IoTContext.runTaskOnRemote("sudo docker kill \(containerName)", device: device, assertSuccess: false)
+        case .dockerImage(_), .dockerCompose(_):
+            try IoTContext.runTaskOnRemote("docker stop $(docker ps -a -q); docker rm $(docker ps -a -q)", device: device, assertSuccess: false)
         }
     }
 }
