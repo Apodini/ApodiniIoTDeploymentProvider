@@ -341,6 +341,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         let actionKeys = postActionMapping
             .first(where: { $0.key == result.device.identifier })?
             .value
+            .filterPositiveResults(result: result)
             .compactMap { $0.0.getOptionRawValue() }
             .joined(separator: ",")
             .appending(",")
@@ -514,12 +515,13 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     }
 }
 
-private extension Array where Element == DiscoveryResult {
-    func filterPositiveResults() -> [Element] {
+private extension Array where Element == (DeploymentDeviceMetadata, DeviceDiscovery.PostActionType) {
+    func filterPositiveResults(result: DiscoveryResult) -> [Element] {
         filter { element in
-            element.foundEndDevices.contains(where: { _, value in
-                value > 0
-            })
+            guard let amount = result.foundEndDevices[element.1.identifier] else {
+                return false
+            }
+            return amount > 0
         }
     }
 }
