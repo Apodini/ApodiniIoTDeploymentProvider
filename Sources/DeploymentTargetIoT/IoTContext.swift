@@ -146,10 +146,14 @@ enum IoTContext {
     }
     
     static func runInDockerCompose(configFileUrl: URL, envFileUrl: URL, device: Device, detached: Bool = false) throws {
+        let hasDockerComposev2: Bool = try {
+            let client = try getSSHClient(for: device)
+            return try client.execute(cmd: "docker compose", responseHandler: nil)
+        }()
+        
         let arguments: String = {
             [
-                "docker",
-                "compose",
+                hasDockerComposev2 ? "docker compose" : "docker-compose",
                 "-f",
                 configFileUrl.path,
                 "--env-file",
