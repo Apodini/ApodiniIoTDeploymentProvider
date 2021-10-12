@@ -232,6 +232,14 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     }
     
     internal func performInputRelatedActions(_ result: DiscoveryResult) throws {
+        func loginIntoDocker(credentialKey: String) throws {
+            let dockerCredentials = credentialStorage[credentialKey]
+            
+            IoTContext.logger.info("Logging into docker")
+            try IoTContext.runTaskOnRemote("sudo docker login -u \(dockerCredentials.username) -p \(dockerCredentials.password)", workingDir: self.remotePackageRootDir.path, device: result.device, assertSuccess: false)
+        }
+        
+        
         switch inputType {
         case .package:
             IoTContext.logger.info("Copying sources to remote")
@@ -243,6 +251,8 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
             IoTContext.logger.info("Building package on remote")
             try buildPackage(on: result.device)
         case .dockerCompose(let fileUrl):
+            try loginIntoDocker(credentialKey: CredentialStorage.dockerComposeKey)
+            
             IoTContext.logger.info("Copying docker-compose to remote")
             try IoTContext.copyResources(
                 result.device,
@@ -251,9 +261,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
             )
         case .dockerImage(let imageName):
             IoTContext.logger.info("A docker image was specified, so skipping copying, fetching and building..")
-            let dockerCredentials = credentialStorage[imageName]
-            IoTContext.logger.info("Logging into docker")
-            try IoTContext.runTaskOnRemote("sudo docker login -u \(dockerCredentials.username) -p \(dockerCredentials.password)", workingDir: self.remotePackageRootDir.path, device: result.device, assertSuccess: false)
+            try loginIntoDocker(credentialKey: imageName)
         }
     }
     
@@ -504,8 +512,11 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
             return
         }
         if case let .dockerImage(imageName) = inputType {
-            IoTContext.logger.notice("A docker image '\(imageName)' has been specified as input. Please enter the credentials to access the docker repo.")
+            IoTContext.logger.notice("A docker image '\(imageName)' has been specified as input. Please enter the credentials to access the docker repo. Skip this step by pressing enter if it's a public repo.")
             credentialStorage[imageName] = IoTContext.readUsernameAndPassword(for: "docker")
+        } else if case let .dockerCompose(fileUrl) = inputType {
+            IoTContext.logger.notice("A docker compose file at '\(fileUrl)' has been specified as input. Please enter the credentials to access the docker repo. Skip this step by pressing enter if it's a public repo.")
+            credentialStorage[CredentialStorage.dockerComposeKey] = IoTContext.readUsernameAndPassword(for: CredentialStorage.dockerComposeKey)
         }
         
         searchableTypes.forEach { type in

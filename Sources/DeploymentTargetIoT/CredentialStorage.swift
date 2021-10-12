@@ -11,6 +11,8 @@ import Foundation
 struct CredentialStorage: Codable {
     typealias Mapping = [String: Credentials]
     
+    static var dockerComposeKey: String = "docker-compose"
+    
     private var storage: [Mapping]
     
     var readFromFile: Bool
