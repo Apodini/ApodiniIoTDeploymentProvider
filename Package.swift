@@ -33,6 +33,10 @@ let package = Package(
             name: "LifxIoTDeploymentOption",
             targets: ["LifxIoTDeploymentOption"]
         ),
+        .library(
+            name: "DuckieIoTDeploymentOption",
+            targets: ["DuckieIoTDeploymentOption"]
+        ),
         .executable(
             name: "LifxIoTDeploymentTarget",
             targets: ["LifxIoTDeploymentTarget"]
