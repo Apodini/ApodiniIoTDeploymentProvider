@@ -14,6 +14,7 @@ import DeploymentTargetIoT
 import DeviceDiscovery
 import LifxDiscoveryActions
 import LifxIoTDeploymentOption
+import DuckieIoTDeploymentOption
 import Foundation
 
 struct LifxDeployCommand: ParsableCommand {
@@ -69,7 +70,24 @@ struct LifxDeployCommand: ParsableCommand {
             option: DeploymentDeviceMetadata(.lifx)
         )
         
+        let duckieFilePath = URL(fileURLWithPath: "/duckie/ducky.json")
+        provider.registerAction(
+            scope: .all,
+            action: .docker(
+                DockerDiscoveryAction(
+                    identifier: ActionIdentifier("docker_duckie"),
+                    imageName: "hendesi/master-thesis:duckie-post-action",
+                    fileUrl: duckieFilePath,
+                    options: [
+                        .privileged,
+                        .volume(hostDir: "/duckie", containerDir: "/"),
+                        .command("/duckie_id.txt"),
+                        .credentials(username: "dummyUsername", password: "password")
+                    ]
+                )
+            ),
+            option: DeploymentDeviceMetadata(.duckie)
+        )
         try provider.run()
-        //        provider.registerAction(scope: .all, action: .action(LIFXDeviceDiscoveryAction.self), option: DeploymentDeviceMetadata(.lifx))
     }
 }
