@@ -16,7 +16,6 @@ enum IoTContext {
 
     static let defaultCredentials = Credentials(username: "ubuntu", password: "test1234")
     
-    
     static let logger = Logger(label: "de.apodini.IoTDeployment")
     
     static let dockerVolumeTmpDir = URL(fileURLWithPath: "/app/tmp")
@@ -59,10 +58,10 @@ enum IoTContext {
     }
     
     private static func getSSHClient(for device: Device) throws -> SSHClient {
-        guard let anyDevice = device as? AnyDevice, let ipAddress = anyDevice.ipv4Address else {
+        guard let ipAddress = device.ipv4Address else {
             throw IoTDeploymentError(description: "Failed to get sshclient for \(device)")
         }
-        return try SSHClient(username: anyDevice.username, password: anyDevice.password, ipAdress: ipAddress)
+        return try SSHClient(username: device.username, password: device.password, ipAdress: ipAddress)
     }
     
     /// A wrapper function that navigates to the specified working directory and executes the command remotely
@@ -78,7 +77,7 @@ enum IoTContext {
         if assertSuccess {
             client.executeWithAssertion(cmd: cmd, responseHandler: responseHandler)
         } else {
-            let _: Bool = try client.execute(cmd: cmd, responseHandler: responseHandler)
+            let _ = try client.executeAsBool(cmd: cmd, responseHandler: responseHandler)
         }
     }
     
@@ -148,7 +147,7 @@ enum IoTContext {
     static func runInDockerCompose(configFileUrl: URL, envFileUrl: URL, device: Device, detached: Bool = false) throws {
         let hasDockerComposev2: Bool = try {
             let client = try getSSHClient(for: device)
-            return try client.execute(cmd: "docker compose", responseHandler: nil)
+            return try client.executeAsBool(cmd: "docker compose", responseHandler: nil)
         }()
         
         let arguments: String = {

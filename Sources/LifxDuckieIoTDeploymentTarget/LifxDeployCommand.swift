@@ -13,6 +13,7 @@ import DeploymentTargetIoTCommon
 import DeploymentTargetIoT
 import DeviceDiscovery
 import LifxDiscoveryActions
+import DuckiePostDiscoveryAction
 import LifxIoTDeploymentOption
 import DuckieIoTDeploymentOption
 import Foundation
@@ -35,18 +36,16 @@ struct LifxDeployCommand: ParsableCommand {
     
     func run() throws {
         let provider = IoTDeploymentProvider(
-            searchableTypes: deploymentOptions.types.split(separator: ",").map(String.init),
-            productName: deploymentOptions.productName,
-            packageRootDir: deploymentOptions.inputPackageDir,
+            searchableTypes: deploymentOptions.types.split(separator: ",").map { DeviceIdentifier(String($0)) },
             deploymentDir: deploymentOptions.deploymentDir,
             automaticRedeployment: deploymentOptions.automaticRedeploy,
             additionalConfiguration: [
                 .deploymentDirectory: deploymentOptions.deploymentDir
             ],
             webServiceArguments: webServiceArguments,
-            //            input: .dockerImage("hendesi/master-thesis:latest-arm64"),
+            input: .dockerImage("hendesi/master-thesis:latest-arm64"),
             //            input: .package(LIFXDeviceDiscoveryAction.self)
-            input: .dockerCompose(URL(fileURLWithPath: "/Users/felice/Documents/ApodiniDemoWebService/docker-compose.yml")),
+//            input: .dockerCompose(URL(fileURLWithPath: "/Users/felice/Documents/ApodiniDemoWebService/docker-compose.yml")),
             configurationFile: URL(fileURLWithPath: "/Users/felice/Documents/ApodiniIoTDeploymentProvider/config.json")
         )
         provider.registerAction(
@@ -69,25 +68,7 @@ struct LifxDeployCommand: ParsableCommand {
                 ),
             option: DeploymentDeviceMetadata(.lifx)
         )
-        
-        let duckieFilePath = URL(fileURLWithPath: "/duckie/ducky.json")
-        provider.registerAction(
-            scope: .all,
-            action: .docker(
-                DockerDiscoveryAction(
-                    identifier: ActionIdentifier("docker_duckie"),
-                    imageName: "hendesi/master-thesis:duckie-post-action",
-                    fileUrl: duckieFilePath,
-                    options: [
-                        .privileged,
-                        .volume(hostDir: "/duckie", containerDir: "/"),
-                        .command("/duckie_id.txt"),
-                        .credentials(username: "dummyUsername", password: "password")
-                    ]
-                )
-            ),
-            option: DeploymentDeviceMetadata(.duckie)
-        )
+        provider.registerAction(scope: .all, action: .action(DuckiePostDiscoveryAction.self), option: DeploymentDeviceMetadata(.duckie))
         try provider.run()
     }
 }

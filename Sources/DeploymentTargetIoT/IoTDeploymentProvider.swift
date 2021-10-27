@@ -33,7 +33,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         /// Use a docker image of the web service for deployment
         case dockerImage(String)
         /// Use the swift package for deployment
-        case package
+        case package(packageUrl: URL, productName: String)
         /// Use a docker compose file for deployment
         /// - Parameter : The URL to the compose file
         case dockerCompose(URL)
@@ -52,9 +52,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     
     public let inputType: InputType
     
-    public let searchableTypes: [String]
-    public let productName: String
-    public let packageRootDir: URL
+    public let searchableTypes: [DeviceIdentifier]
     public let deploymentDir: URL
     public let webServiceArguments: [String]
     
@@ -65,7 +63,12 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     public let dryRun = false
     
     public var target: DeploymentProviderTarget {
-        .spmTarget(packageUrl: packageRootDir, targetName: productName)
+        switch inputType {
+        case let .package(packageUrl, productName):
+            return .spmTarget(packageUrl: packageUrl, targetName: productName)
+        case .dockerImage(_), .dockerCompose(_):
+            return .executable(URL(fileURLWithPath: ""))
+        }
     }
     
     private var isRunning = false {
@@ -88,7 +91,18 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     internal var results: [DiscoveryResult] = []
     
     private var packageName: String {
-        packageRootDir.lastPathComponent
+        productName
+    }
+    
+    internal var productName: String {
+        switch inputType {
+        case .dockerImage(let name):
+            return "ApodiniIoTDockerInstance"
+        case .dockerCompose(let url):
+            return url.deletingLastPathComponent().lastPathComponent
+        case .package(packageUrl: _, productName: let productName):
+            return productName
+        }
     }
     
     private var remotePackageRootDir: URL {
@@ -110,9 +124,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     /// - Parameter input: Specify if the deployment is done via docker or swift package.
     /// - Parameter port: The port the deployed web service will listen on. Defaults to 8080
     public init(
-        searchableTypes: [String],
-        productName: String,
-        packageRootDir: String,
+        searchableTypes: [DeviceIdentifier],
         deploymentDir: String = "/usr/deployment",
         automaticRedeployment: Bool,
         additionalConfiguration: [ConfigurationProperty: Any] = [:],
@@ -122,8 +134,6 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         configurationFile: URL? = nil
     ) {
         self.searchableTypes = searchableTypes
-        self.productName = productName
-        self.packageRootDir = URL(fileURLWithPath: packageRootDir)
         // swiftlint:disable:next force_unwrapping
         self.deploymentDir = URL(string: deploymentDir)!
         self.automaticRedeployment = automaticRedeployment
@@ -136,7 +146,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         
         // initialize empty arrays
         searchableTypes.forEach {
-            postActionMapping[DeviceIdentifier($0)] = []
+            postActionMapping[$0] = []
         }
     }
     
@@ -175,7 +185,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     ) {
         switch scope {
         case .all:
-            self.searchableTypes.forEach { postActionMapping[DeviceIdentifier($0)]?.append((option, action)) }
+            self.searchableTypes.forEach { postActionMapping[$0]?.append((option, action)) }
         case .some(let array):
             array.forEach { postActionMapping[DeviceIdentifier($0)]?.append((option, action)) }
         case .one(let type):
@@ -241,9 +251,9 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         
         
         switch inputType {
-        case .package:
+        case .package(packageUrl: let packageUrl, productName: _):
             IoTContext.logger.info("Copying sources to remote")
-            try copyResourcesToRemote(result)
+            try copyResourcesToRemote(result, packageRootDir: packageUrl)
             
             IoTContext.logger.info("Fetching the newest dependencies")
             try fetchDependencies(on: result.device)
@@ -265,13 +275,13 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         }
     }
     
-    internal func setup(for type: String) throws -> DeviceDiscovery {
-        let discovery = DeviceDiscovery(DeviceIdentifier(type), domain: .local)
+    internal func setup(for identifier: DeviceIdentifier) throws -> DeviceDiscovery {
+        let discovery = DeviceDiscovery(identifier, domain: .local)
         var actions: [DeviceDiscovery.PostActionType] = [
             .action(CreateDeploymentDirectoryAction.self)
         ]
         
-        if let mapping = postActionMapping.first(where: { $0.key.rawValue == type }) {
+        if let mapping = postActionMapping.first(where: { $0.key.rawValue == identifier.rawValue }) {
             actions.append(contentsOf: mapping.value.compactMap { $0.1 })
         }
         
@@ -279,7 +289,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
             actions
         )
 
-        let credentials = credentialStorage[type]
+        let credentials = credentialStorage[identifier.rawValue]
         let config: [ConfigurationProperty: Any] = [
             .username: credentials.username,
             .password: credentials.password,
@@ -469,7 +479,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     }
     
 // MARK: - Miscellaneous
-    private func copyResourcesToRemote(_ result: DiscoveryResult) throws {
+    private func copyResourcesToRemote(_ result: DiscoveryResult, packageRootDir: URL) throws {
         // we dont need any existing build files because we are moving to a different aarch
         let fileManager = FileManager.default
         if fileManager.directoryExists(atUrl: packageRootDir.appendingPathComponent(".build")) {
@@ -505,6 +515,11 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
             device: device,
             assertSuccess: false
         )
+        try IoTContext.runTaskOnRemote(
+            "sudo docker stop \(productName); sudo docker rm \(productName)",
+            device: device,
+            assertSuccess: false
+        )
     }
     
     private func readCredentialsIfNeeded() {
@@ -521,7 +536,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         
         searchableTypes.forEach { type in
             IoTContext.logger.notice("Please enter credentials for \(type)")
-            credentialStorage[type] = dryRun ? IoTContext.defaultCredentials : IoTContext.readUsernameAndPassword(for: type)
+            credentialStorage[type.rawValue] = dryRun ? IoTContext.defaultCredentials : IoTContext.readUsernameAndPassword(for: type.rawValue)
         }
     }
 }

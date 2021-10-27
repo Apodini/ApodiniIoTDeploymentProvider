@@ -38,8 +38,8 @@ let package = Package(
             targets: ["DuckieIoTDeploymentOption"]
         ),
         .executable(
-            name: "LifxIoTDeploymentTarget",
-            targets: ["LifxIoTDeploymentTarget"]
+            name: "LifxDuckieIoTDeploymentTarget",
+            targets: ["LifxDuckieIoTDeploymentTarget"]
         )
     ],
     dependencies: [
@@ -73,12 +73,13 @@ let package = Package(
             ]
         ),
         .executableTarget(
-            name: "LifxIoTDeploymentTarget",
+            name: "LifxDuckieIoTDeploymentTarget",
             dependencies: [
                 .target(name: "DeploymentTargetIoT"),
                 .target(name: "LifxIoTDeploymentOption"),
                 .target(name: "DeploymentTargetIoTCommon"),
                 .target(name: "DuckieIoTDeploymentOption"),
+                .target(name: "DuckiePostDiscoveryAction"),
                 .product(name: "LifxDiscoveryActions", package: "swift-nio-lifx-impl")
             ]
         ),
@@ -94,6 +95,12 @@ let package = Package(
             dependencies: [
                 .product(name: "ApodiniDeployBuildSupport", package: "Apodini"),
                 .target(name: "DeploymentTargetIoTCommon")
+            ]
+        ),
+        .target(
+            name: "DuckiePostDiscoveryAction",
+            dependencies: [
+                .product(name: "SwiftDeviceDiscovery", package: "swift-device-discovery"),
             ]
         ),
         .testTarget(

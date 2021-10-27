@@ -19,6 +19,23 @@ private enum EvaluationType {
 
 extension IoTDeploymentProvider {
     func listenForChanges() throws {
+        func checkForLeavingDevices(_ newResults: [DiscoveryResult]) throws {
+            let leavingDevices = self.results.filter { oldResult in
+                let ip = oldResult.device.ipv4Address ?? ""
+                return !newResults
+                    .compactMap { $0.device.ipv4Address }
+                    .contains(ip)
+            }
+            guard !leavingDevices.isEmpty else {
+                return
+            }
+            IoTContext.logger.info("Found \(leavingDevices.count) leaving devices. Trying shutdown the web service gracefully.")
+            try leavingDevices.forEach {
+                try killInstanceOnRemote($0.device)
+            }
+            IoTContext.logger.info("Shutdown the web service gracefully.")
+        }
+ 
         guard automaticRedeployment else {
             IoTContext.logger.notice("'automaticRedeploy' was set to false. Exiting.")
             return
@@ -32,6 +49,8 @@ extension IoTDeploymentProvider {
                     
                     // Run discovery with 30 seconds timeout
                     let results = try discovery.run(2).wait()
+                    
+                    try checkForLeavingDevices(results)
                     for result in results {
                         // Evaluate if & which changes occurred
                         let evaluation = try self.evaluateChanges(result, discovery: discovery)
@@ -45,6 +64,7 @@ extension IoTDeploymentProvider {
                             continue
                         }
                     }
+                    
                     self.results = results
                     discovery.stop()
                 }
