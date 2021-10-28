@@ -15,6 +15,8 @@ public struct DuckiePostDiscoveryAction: PostDiscoveryAction {
         ActionIdentifier("duckie-post-discovery")
     }
     
+    public init() {}
+    
     public func run(_ device: Device, on eventLoopGroup: EventLoopGroup, client: SSHClient?) throws -> EventLoopFuture<Int> {
         let eventLoop = eventLoopGroup.next()
         
@@ -29,6 +31,4 @@ public struct DuckiePostDiscoveryAction: PostDiscoveryAction {
             return eventLoop.makeSucceededFuture(0)
         }
     }
-    
-    public init() {}
 }

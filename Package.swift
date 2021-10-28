@@ -100,7 +100,7 @@ let package = Package(
         .target(
             name: "DuckiePostDiscoveryAction",
             dependencies: [
-                .product(name: "SwiftDeviceDiscovery", package: "swift-device-discovery"),
+                .product(name: "SwiftDeviceDiscovery", package: "swift-device-discovery")
             ]
         ),
         .testTarget(

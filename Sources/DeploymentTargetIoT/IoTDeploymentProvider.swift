@@ -87,8 +87,8 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     private var credentialStorage: CredentialStorage
     
     internal let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-    
     internal var results: [DiscoveryResult] = []
+    internal let redeploymentInterval: Int
     
     private var packageName: String {
         productName
@@ -131,7 +131,9 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         webServiceArguments: [String] = [],
         input: InputType,
         port: Int = 8080,
-        configurationFile: URL? = nil
+        configurationFile: URL? = nil,
+        dumpLog: Bool = false,
+        redeploymentInterval: Int = 30
     ) {
         self.searchableTypes = searchableTypes
         // swiftlint:disable:next force_unwrapping
@@ -141,8 +143,15 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         self.webServiceArguments = webServiceArguments
         self.inputType = input
         self.port = port
+        self.redeploymentInterval = redeploymentInterval
         
         self.credentialStorage = CredentialStorage(from: configurationFile)
+        do {
+            IoTContext.logger = try .initializeLogger(dumpLog: dumpLog)
+        } catch {
+            IoTContext.logger = Logger(label: Logger.iotLoggerLabel)
+            IoTContext.logger.error("Failed to initialize logger with dump. Falling back to default logger.")
+        }
         
         // initialize empty arrays
         searchableTypes.forEach {
@@ -276,7 +285,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     }
     
     internal func setup(for identifier: DeviceIdentifier) throws -> DeviceDiscovery {
-        let discovery = DeviceDiscovery(identifier, domain: .local)
+        let discovery = DeviceDiscovery(identifier, domain: .local, logger: IoTContext.logger)
         var actions: [DeviceDiscovery.PostActionType] = [
             .action(CreateDeploymentDirectoryAction.self)
         ]

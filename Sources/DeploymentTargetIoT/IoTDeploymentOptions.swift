@@ -30,5 +30,11 @@ public struct IoTDeploymentOptions: ParsableArguments {
     @Option(help: "The port the web service will listen on")
     public var port: Int = 8080
     
+    @Option(help: "The interval stating how frequent the provider tries to redeploy")
+    public var redeploymentInterval: Int = 30
+    
+    @Flag(help: "Dumps the log of the provider to /Log in the format <timeStamp>_<executableName>_dump.log")
+    public var dumpLog = false
+    
     public init() {}
 }

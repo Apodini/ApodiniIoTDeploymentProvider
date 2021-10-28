@@ -16,7 +16,7 @@ enum IoTContext {
 
     static let defaultCredentials = Credentials(username: "ubuntu", password: "test1234")
     
-    static let logger = Logger(label: "de.apodini.IoTDeployment")
+    static var logger = Logger(label: "de.apodini.IoTDeployment")
     
     static let dockerVolumeTmpDir = URL(fileURLWithPath: "/app/tmp")
     
@@ -77,7 +77,7 @@ enum IoTContext {
         if assertSuccess {
             client.executeWithAssertion(cmd: cmd, responseHandler: responseHandler)
         } else {
-            let _ = try client.executeAsBool(cmd: cmd, responseHandler: responseHandler)
+            _ = try client.executeAsBool(cmd: cmd, responseHandler: responseHandler)
         }
     }
     
@@ -174,5 +174,110 @@ struct IoTDeploymentError: Swift.Error {
 extension Dictionary {
     static func + (lhs: [Key: Value], rhs: [Key: Value]) -> [Key: Value] {
         lhs.merging(rhs) { $1 }
+    }
+}
+
+extension Logger {
+    static var iotLoggerLabel = "de.apodini.IoTDeployment"
+    
+    static func initializeLogger(dumpLog: Bool) throws -> Self {
+        let fileManager = FileManager.default
+        let logDir = FileManager.projectDirectory.appendingPathComponent("Logs")
+        
+        let fileTimestamp: String = {
+            var buffer = [Int8](repeating: 0, count: 255)
+            var timestamp = time(nil)
+            let localTime = localtime(&timestamp)
+            strftime(&buffer, buffer.count, "%Y-%m-%dT%H:%M", localTime)
+            return buffer.withUnsafeBufferPointer {
+                $0.withMemoryRebound(to: CChar.self) {
+                    String(cString: $0.baseAddress!) // swiftlint:disable:this force_unwrapping
+                }
+            }
+        }()
+        
+        if dumpLog {
+            // create Logs dir if non-existent
+            if !fileManager.fileExists(atPath: logDir.path) {
+                try fileManager.createDirectory(at: logDir, withIntermediateDirectories: false)
+            }
+            return Logger(label: iotLoggerLabel, factory: { _ in
+                IoTLogHandler(fileURL: logDir, label: iotLoggerLabel, fileTimeStamp: fileTimestamp)
+            })
+        }
+        return Logger(label: iotLoggerLabel)
+    }
+}
+
+extension FileManager {
+    static var projectDirectory: URL {
+        var fileUrl = URL(fileURLWithPath: #filePath)
+        while fileUrl.lastPathComponent != "Sources" {
+            fileUrl.deleteLastPathComponent()
+        }
+        return fileUrl.deletingLastPathComponent()
+    }
+}
+
+struct IoTLogHandler: LogHandler {
+    let fileURL: URL
+    let label: String
+    let fileTimeStamp: String
+    
+    var metadata: Logger.Metadata = [:]
+    
+    var logLevel: Logger.Level = .debug
+    
+    // swiftlint:disable:next function_parameter_count
+    func log(level: Logger.Level, message: Logger.Message, metadata: Logger.Metadata?, source: String, file: String, function: String, line: UInt) {
+        let dumpfileURL = fileURL.appendingPathComponent(
+            "\(fileTimeStamp)_\(Bundle.main.executableURL?.lastPathComponent ?? "")_dump.log"
+        )
+        
+        let str = "\(self.timestamp()) \(level) \(self.label): \(message)"
+        print(str)
+        
+        guard let data = (str + "\n").data(using: .utf8) else {
+            printErrorMsg()
+            return
+        }
+        if let fileHandle = FileHandle(forWritingAtPath: dumpfileURL.path) {
+            defer {
+                fileHandle.closeFile()
+            }
+            fileHandle.seekToEndOfFile()
+            fileHandle.write(data)
+        } else {
+            do {
+                try data.write(to: dumpfileURL, options: .atomic)
+            } catch {
+                printErrorMsg(error: error)
+            }
+        }
+    }
+    
+    private func printErrorMsg(error: Error? = nil) {
+        print("\(self.timestamp()) \(Logger.Level.error) \(self.label): \(error). Failed to log data to file.")
+    }
+    
+    private func timestamp() -> String {
+        var buffer = [Int8](repeating: 0, count: 255)
+        var timestamp = time(nil)
+        let localTime = localtime(&timestamp)
+        strftime(&buffer, buffer.count, "%Y-%m-%dT%H:%M:%S%z", localTime)
+        return buffer.withUnsafeBufferPointer {
+            $0.withMemoryRebound(to: CChar.self) {
+                String(cString: $0.baseAddress!) // swiftlint:disable:this force_unwrapping
+            }
+        }
+    }
+    
+    subscript(metadataKey metadataKey: String) -> Logger.Metadata.Value? {
+        get {
+            metadata[metadataKey]
+        }
+        set(newValue) {
+            metadata[metadataKey] = newValue
+        }
     }
 }

@@ -21,10 +21,10 @@ extension IoTDeploymentProvider {
     func listenForChanges() throws {
         func checkForLeavingDevices(_ newResults: [DiscoveryResult]) throws {
             let leavingDevices = self.results.filter { oldResult in
-                let ip = oldResult.device.ipv4Address ?? ""
+                let ipAddress = oldResult.device.ipv4Address ?? ""
                 return !newResults
                     .compactMap { $0.device.ipv4Address }
-                    .contains(ip)
+                    .contains(ipAddress)
             }
             guard !leavingDevices.isEmpty else {
                 return

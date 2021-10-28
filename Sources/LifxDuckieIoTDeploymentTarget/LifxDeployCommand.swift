@@ -44,9 +44,9 @@ struct LifxDeployCommand: ParsableCommand {
             ],
             webServiceArguments: webServiceArguments,
             input: .dockerImage("hendesi/master-thesis:latest-arm64"),
-            //            input: .package(LIFXDeviceDiscoveryAction.self)
-//            input: .dockerCompose(URL(fileURLWithPath: "/Users/felice/Documents/ApodiniDemoWebService/docker-compose.yml")),
-            configurationFile: URL(fileURLWithPath: "/Users/felice/Documents/ApodiniIoTDeploymentProvider/config.json")
+            configurationFile: URL(fileURLWithPath: "/Users/felice/Documents/ApodiniIoTDeploymentProvider/config.json"),
+            dumpLog: deploymentOptions.dumpLog,
+            redeploymentInterval: deploymentOptions.redeploymentInterval
         )
         provider.registerAction(
             scope: .all,

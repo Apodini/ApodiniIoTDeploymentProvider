@@ -20,16 +20,18 @@ for ((i=1;i<=10;i++)); do
     echo "${GREEN}\xE2\x9C\x94 RUN $i done in $SECONDS${DEFAULT}"
 done
 
+sleep 120
 echo "Testing with docker reset. Downloading images on every run"
 
 for ((i=1;i<=10;i++)); do
+    reset
     SECONDS=0
     ./$EXEC_PATH
     echo "$i - $SECONDS"$'\n' >> jass_resultTimes_reset.txt
     echo "${GREEN}\xE2\x9C\x94 RUN $i done in $SECONDS${DEFAULT}"
-    reset
 done
 
+sleep 120
 echo "Testing without docker reset. Assuming needed images are already downloaded"
 
 for ((i=1;i<=10;i++)); do
