@@ -152,13 +152,13 @@ enum IoTContext {
         
         let arguments: String = {
             [
+                "sudo",
                 hasDockerComposev2 ? "docker compose" : "docker-compose",
                 "-f",
                 configFileUrl.path,
                 "--env-file",
                 envFileUrl.path,
                 "up",
-                "--force-recreate",
                 detached ? "-d" : ""
             ].joined(separator: " ")
         }()
