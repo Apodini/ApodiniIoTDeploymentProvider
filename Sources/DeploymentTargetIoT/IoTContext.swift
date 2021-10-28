@@ -157,6 +157,7 @@ enum IoTContext {
                 configFileUrl.path,
                 "--env-file",
                 envFileUrl.path,
+                "--force-recreate",
                 "up",
                 detached ? "-d" : ""
             ].joined(separator: " ")
