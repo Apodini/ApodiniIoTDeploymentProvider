@@ -212,7 +212,9 @@ extension Logger {
 extension FileManager {
     static var projectDirectory: URL {
         var fileUrl = URL(fileURLWithPath: #filePath)
-        while fileUrl.lastPathComponent != "Sources" {
+        let decisivePathComponent = fileUrl.pathComponents.contains(".build") ? ".build" : "Sources"
+
+        while fileUrl.lastPathComponent != decisivePathComponent {
             fileUrl.deleteLastPathComponent()
         }
         return fileUrl.deletingLastPathComponent()
