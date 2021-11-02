@@ -46,7 +46,7 @@ struct LifxDeployCommand: ParsableCommand {
             input: .dockerImage("hendesi/master-thesis:latest-arm64"),
             configurationFile: URL(fileURLWithPath: "/Users/felice/Documents/ApodiniIoTDeploymentProvider/config.json"),
             dumpLog: deploymentOptions.dumpLog,
-            redeploymentInterval: deploymentOptions.redeploymentInterval
+            redeploymentInterval: TimeInterval(deploymentOptions.redeploymentInterval)
         )
         provider.registerAction(
             scope: .all,

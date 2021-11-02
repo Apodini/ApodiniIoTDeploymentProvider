@@ -88,7 +88,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     
     internal let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
     internal var results: [DiscoveryResult] = []
-    internal let redeploymentInterval: Int
+    internal let redeploymentInterval: TimeInterval
     
     private var packageName: String {
         productName
@@ -133,7 +133,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         port: Int = 8080,
         configurationFile: URL? = nil,
         dumpLog: Bool = false,
-        redeploymentInterval: Int = 30
+        redeploymentInterval: TimeInterval = 30
     ) {
         self.searchableTypes = searchableTypes
         // swiftlint:disable:next force_unwrapping
@@ -146,6 +146,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         self.redeploymentInterval = redeploymentInterval
         
         self.credentialStorage = CredentialStorage(from: configurationFile)
+        
         do {
             IoTContext.logger = try .initializeLogger(dumpLog: dumpLog)
         } catch {
@@ -170,7 +171,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         for type in searchableTypes {
             let discovery = try setup(for: type)
             
-            results = try discovery.run(2).wait()
+            results = try discovery.run().wait()
             IoTContext.logger.info("Found: \(results)")
             
             try results.forEach {

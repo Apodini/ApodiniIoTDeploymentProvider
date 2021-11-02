@@ -39,7 +39,7 @@ public struct KillSessionCommand: ParsableCommand {
             discovery.configuration = [.runPostActions: false]
 
             let credentials = IoTContext.readUsernameAndPassword(for: id)
-            let results = try discovery.run(2).wait()
+            let results = try discovery.run().wait()
 
             for result in results {
                 let ipAddress = try IoTContext.ipAddress(for: result.device)
