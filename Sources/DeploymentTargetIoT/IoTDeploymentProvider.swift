@@ -205,7 +205,6 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     
     internal func deploy(_ result: DiscoveryResult, discovery: DeviceDiscovery) throws {
         IoTContext.logger.debug("Cleaning up any leftover actions data in deployment directory")
-        try cleanup(on: result.device)
         
         guard
             // do nothing if there were no post actions
@@ -516,22 +515,6 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
             workingDir: self.remotePackageRootDir.path,
             device: device
         )
-    }
-    
-    private func cleanup(on device: Device) throws {
-        try IoTContext.runTaskOnRemote(
-            "sudo rm -rfv !(\"\(packageName)\")",
-            workingDir: self.deploymentDir.path,
-            device: device,
-            assertSuccess: false
-        )
-        if case .dockerImage(let imageName) = inputType {
-            try IoTContext.runTaskOnRemote(
-                "docker stop \(imageName); docker rm -f \(imageName)",
-                device: device,
-                assertSuccess: false
-            )
-        }
     }
     
     private func readCredentialsIfNeeded() {
