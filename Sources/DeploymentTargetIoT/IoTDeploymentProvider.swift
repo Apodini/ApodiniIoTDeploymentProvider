@@ -525,11 +525,13 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
             device: device,
             assertSuccess: false
         )
-        try IoTContext.runTaskOnRemote(
-            "docker stop $(docker ps -a -q)",
-            device: device,
-            assertSuccess: false
-        )
+        if case .dockerImage(let imageName) = inputType {
+            try IoTContext.runTaskOnRemote(
+                "docker stop \(imageName); docker rm -f \(imageName)",
+                device: device,
+                assertSuccess: false
+            )
+        }
     }
     
     private func readCredentialsIfNeeded() {
