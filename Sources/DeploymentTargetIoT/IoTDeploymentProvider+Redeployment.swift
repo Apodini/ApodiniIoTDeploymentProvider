@@ -45,12 +45,17 @@ extension IoTDeploymentProvider {
         let timer = Timer(fire: Date(), interval: redeploymentInterval, repeats: true, block: { _ in
             do {
                 for type in self.searchableTypes {
-                    let discovery = try self.setup(for: type)
+                    var discovery = try self.setup(for: type, withPostDiscoveryActions: false)
+                    var results = try discovery.run().wait()
                     
-                    // Run discovery with 30 seconds timeout
-                    let results = try discovery.run().wait()
-                    
+                    // To check if a gateway left, we dont need post discovery actions
                     try checkForLeavingDevices(results)
+                    
+                    discovery.stop()
+                    discovery = try self.setup(for: type)
+                    
+                    results = try discovery.run().wait()
+                    
                     for result in results {
                         // Evaluate if & which changes occurred
                         let evaluation = try self.evaluateChanges(result, discovery: discovery)

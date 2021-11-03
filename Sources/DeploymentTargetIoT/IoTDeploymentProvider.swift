@@ -285,7 +285,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         }
     }
     
-    internal func setup(for identifier: DeviceIdentifier) throws -> DeviceDiscovery {
+    internal func setup(for identifier: DeviceIdentifier, withPostDiscoveryActions: Bool = true) throws -> DeviceDiscovery {
         let discovery = DeviceDiscovery(identifier, domain: .local, logger: IoTContext.logger)
         var actions: [DeviceDiscovery.PostActionType] = [
             .action(CreateDeploymentDirectoryAction.self)
@@ -303,7 +303,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         let config: [ConfigurationProperty: Any] = [
             .username: credentials.username,
             .password: credentials.password,
-            .runPostActions: true,
+            .runPostActions: withPostDiscoveryActions,
             IoTContext.deploymentDirectory: self.deploymentDir
         ] + additionalConfiguration
         discovery.configuration = .init(from: config)
