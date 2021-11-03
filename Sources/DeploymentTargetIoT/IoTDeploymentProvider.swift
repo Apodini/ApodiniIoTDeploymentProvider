@@ -256,7 +256,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
             let dockerCredentials = credentialStorage[credentialKey]
             
             IoTContext.logger.info("Logging into docker")
-            try IoTContext.runTaskOnRemote("sudo docker login -u \(dockerCredentials.username) -p \(dockerCredentials.password)", workingDir: self.remotePackageRootDir.path, device: result.device, assertSuccess: false)
+            try IoTContext.runTaskOnRemote("sudo docker login -u \(dockerCredentials.username) -p \(dockerCredentials.password)", device: result.device, assertSuccess: false)
         }
         
         
