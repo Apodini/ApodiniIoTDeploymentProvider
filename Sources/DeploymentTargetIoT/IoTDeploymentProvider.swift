@@ -526,7 +526,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
             assertSuccess: false
         )
         try IoTContext.runTaskOnRemote(
-            "sudo docker stop \(productName); sudo docker rm \(productName)",
+            "docker stop $(docker ps -a -q)",
             device: device,
             assertSuccess: false
         )
