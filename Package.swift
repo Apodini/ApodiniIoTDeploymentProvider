@@ -28,24 +28,11 @@ let package = Package(
         .library(
             name: "DeploymentTargetIoTCommon",
             targets: ["DeploymentTargetIoTCommon"]
-        ),
-        .library(
-            name: "LifxIoTDeploymentOption",
-            targets: ["LifxIoTDeploymentOption"]
-        ),
-        .library(
-            name: "DuckieIoTDeploymentOption",
-            targets: ["DuckieIoTDeploymentOption"]
-        ),
-        .executable(
-            name: "LifxDuckieIoTDeploymentTarget",
-            targets: ["LifxDuckieIoTDeploymentTarget"]
         )
     ],
     dependencies: [
         .package(url: "https://github.com/Apodini/Apodini.git", .upToNextMinor(from: "0.5.0")),
         .package(name: "swift-device-discovery", url: "https://github.com/Apodini/SwiftDeviceDiscovery.git", .branch("master")),
-        .package(name: "swift-nio-lifx-impl", url: "https://github.com/Apodini/Swift-NIO-LIFX-Impl", .branch("develop")),
         .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMinor(from: "0.4.0"))
     ],
     targets: [
@@ -70,37 +57,6 @@ let package = Package(
             name: "DeploymentTargetIoTCommon",
             dependencies: [
                 .product(name: "ApodiniDeployBuildSupport", package: "Apodini")
-            ]
-        ),
-        .executableTarget(
-            name: "LifxDuckieIoTDeploymentTarget",
-            dependencies: [
-                .target(name: "DeploymentTargetIoT"),
-                .target(name: "LifxIoTDeploymentOption"),
-                .target(name: "DeploymentTargetIoTCommon"),
-                .target(name: "DuckieIoTDeploymentOption"),
-                .target(name: "DuckiePostDiscoveryAction"),
-                .product(name: "LifxDiscoveryActions", package: "swift-nio-lifx-impl")
-            ]
-        ),
-        .target(
-            name: "LifxIoTDeploymentOption",
-            dependencies: [
-                .product(name: "ApodiniDeployBuildSupport", package: "Apodini"),
-                .target(name: "DeploymentTargetIoTCommon")
-            ]
-        ),
-        .target(
-            name: "DuckieIoTDeploymentOption",
-            dependencies: [
-                .product(name: "ApodiniDeployBuildSupport", package: "Apodini"),
-                .target(name: "DeploymentTargetIoTCommon")
-            ]
-        ),
-        .target(
-            name: "DuckiePostDiscoveryAction",
-            dependencies: [
-                .product(name: "SwiftDeviceDiscovery", package: "swift-device-discovery")
             ]
         ),
         .testTarget(

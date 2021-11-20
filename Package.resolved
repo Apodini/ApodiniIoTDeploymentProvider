@@ -308,33 +308,6 @@
         }
       },
       {
-        "package": "swift-nio-ip",
-        "repositoryURL": "https://github.com/PSchmiedmayer/Swift-NIO-IP.git",
-        "state": {
-          "branch": null,
-          "revision": "598f56ec73fba0630a1b49c6ff97ac2e2d565a9e",
-          "version": "0.0.1"
-        }
-      },
-      {
-        "package": "swift-nio-lifx",
-        "repositoryURL": "https://github.com/hendesi/Swift-NIO-LIFX.git",
-        "state": {
-          "branch": "develop",
-          "revision": "c84af7276995920c26a06a9cb947d1f25a68ccda",
-          "version": null
-        }
-      },
-      {
-        "package": "swift-nio-lifx-impl",
-        "repositoryURL": "https://github.com/Apodini/Swift-NIO-LIFX-Impl",
-        "state": {
-          "branch": "develop",
-          "revision": "a672a896c0733c8585341e285c1f0aad1c3eaa1a",
-          "version": null
-        }
-      },
-      {
         "package": "swift-nio-ssh",
         "repositoryURL": "https://github.com/apple/swift-nio-ssh",
         "state": {
