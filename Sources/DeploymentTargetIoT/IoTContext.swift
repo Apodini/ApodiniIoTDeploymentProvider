@@ -12,7 +12,7 @@ import ApodiniUtils
 import Logging
 
 public enum IoTContext {
-    static let deploymentDirectory = ConfigurationProperty("key_deployDir")
+    public static let deploymentDirectory = ConfigurationProperty("key_deployDir")
 
     static let defaultCredentials = Credentials(username: "ubuntu", password: "test1234")
     
