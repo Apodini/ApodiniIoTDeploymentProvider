@@ -122,6 +122,11 @@ when initializing an IoT deployment provider.
 ## Final remarks
 As mentioned in the beginning, this is still work in progress. So if you come across any bugs or feel like there is some important feature missing or you just have questions about the provider, please don't hesitate to reach out to me (@hendesi) or Paul (@PSchmiedmayer).  
 
+## Validation
+This project has been validated in two case studies. Links down below.
+- JASS Validation: https://github.com/JASS-2021/JassDeploymentProviderValidation
+- FA Validation: https://github.com/fa21-collaborative-drone-interactions/BuoyDeploymentProviderValidation
+
 ## Contributing
 Contributions to this project are welcome. Please make sure to read the [contribution guidelines](https://github.com/Apodini/.github/blob/main/CONTRIBUTING.md) and the [contributor covenant code of conduct](https://github.com/Apodini/.github/blob/main/CODE_OF_CONDUCT.md) first.
 
