@@ -47,9 +47,10 @@ public class IoTRuntime<Service: WebService>: DeploymentProviderRuntime {
     }
     
     public func configure(_ app: Application) throws {
-        app.storage[HTTPConfigurationStorageKey.self] = HTTPConfiguration(
+        let config = HTTPConfiguration(
             bindAddress: .interface(currentNodeCustomLaunchInfo.host.path,port: currentNodeCustomLaunchInfo.port)
-                 )
+        )
+        config.configure(app)
     }
     
     public func handleRemoteHandlerInvocation<H: IdentifiableHandler>(
