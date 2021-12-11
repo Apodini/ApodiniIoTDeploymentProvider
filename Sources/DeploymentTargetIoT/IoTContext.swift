@@ -23,7 +23,7 @@ public enum IoTContext {
     private static var startDate = Date()
     
     static func copyResources(_ device: Device, origin: String, destination: String) throws {
-        let task = Task(
+        let task = ChildProcess(
             executableUrl: Self._findExecutable("rsync"),
             arguments: [
                 "-avz",
@@ -51,7 +51,7 @@ public enum IoTContext {
     }
     
     private static func _findExecutable(_ name: String) -> URL {
-        guard let url = Task.findExecutable(named: name) else {
+        guard let url = ChildProcess.findExecutable(named: name) else {
             fatalError("Unable to find executable '\(name)'")
         }
         return url
