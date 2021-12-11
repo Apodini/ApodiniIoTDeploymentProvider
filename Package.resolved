@@ -347,9 +347,9 @@
         "package": "swift-device-discovery",
         "repositoryURL": "https://github.com/Apodini/SwiftDeviceDiscovery.git",
         "state": {
-          "branch": "master",
-          "revision": "8f8cf4c4d5643a4c51a67fd1848f82736085986b",
-          "version": null
+          "branch": null,
+          "revision": "928bb257de241dae8fe1166e6901166577b0c4e4",
+          "version": "0.1.0"
         }
       },
       {
