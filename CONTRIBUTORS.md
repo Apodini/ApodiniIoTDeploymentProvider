@@ -8,7 +8,8 @@ SPDX-License-Identifier: MIT
              
 -->
 
-Apodini contributors
+Contributors
 ====================
 
 * [Paul Schmiedmayer](https://github.com/PSchmiedmayer)
+* [Felix Desiderato](https://github.com/hendesi)
