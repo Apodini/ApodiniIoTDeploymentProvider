@@ -210,7 +210,7 @@ extension Logger {
 }
 
 extension FileManager {
-    static var projectDirectory: URL {
+    public static var projectDirectory: URL {
         var fileUrl = URL(fileURLWithPath: #filePath)
         let decisivePathComponent = fileUrl.pathComponents.contains(".build") ? ".build" : "Sources"
 
