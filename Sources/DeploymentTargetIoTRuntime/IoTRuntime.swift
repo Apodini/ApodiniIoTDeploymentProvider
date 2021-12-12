@@ -48,7 +48,7 @@ public class IoTRuntime<Service: WebService>: DeploymentProviderRuntime {
     
     public func configure(_ app: Application) throws {
         let config = HTTPConfiguration(
-            bindAddress: .interface(currentNodeCustomLaunchInfo.host.path,port: currentNodeCustomLaunchInfo.port)
+            bindAddress: .interface(currentNodeCustomLaunchInfo.host.path, port: currentNodeCustomLaunchInfo.port)
         )
         config.configure(app)
     }

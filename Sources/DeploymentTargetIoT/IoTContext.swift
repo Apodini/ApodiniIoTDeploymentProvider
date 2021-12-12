@@ -11,7 +11,9 @@ import DeviceDiscovery
 import ApodiniUtils
 import Logging
 
+/// Contains context and auxiliarity functions for the IoT deployment provider
 public enum IoTContext {
+    /// The default `ConfigurationProperty` key for the deployment directory
     public static let deploymentDirectory = ConfigurationProperty("key_deployDir")
 
     static let defaultCredentials = Credentials(username: "ubuntu", password: "test1234")
@@ -210,6 +212,7 @@ extension Logger {
 }
 
 extension FileManager {
+    /// Returns the path to directory of the current project.
     public static var projectDirectory: URL {
         var fileUrl = URL(fileURLWithPath: #filePath)
         let decisivePathComponent = fileUrl.pathComponents.contains(".build") ? ".build" : "Sources"

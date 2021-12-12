@@ -66,7 +66,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
         switch inputType {
         case let .package(packageUrl, productName):
             return .spmTarget(packageUrl: packageUrl, targetName: productName)
-        case .dockerImage(_), .dockerCompose(_):
+        case .dockerImage, .dockerCompose:
             return .executable(URL(fileURLWithPath: ""))
         }
     }
@@ -336,7 +336,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
                 privileged: true,
                 port: port
             )
-        case .dockerCompose(_):
+        case .dockerCompose:
             let volumeURL = IoTContext.dockerVolumeTmpDir.appendingPathComponent("WebServiceStructure.json")
             let envFileUrl = try createEnvFile(for: .startup(volumeURL, node.id, handlerIds), device: device)
             
@@ -383,7 +383,7 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
                 device: result.device,
                 workingDir: deploymentDir
             )
-        case .dockerCompose(_):
+        case .dockerCompose:
             let envFileUrl = try createEnvFile(for: .structureExport(actionKeys ?? "default", fileUrl, ipAddress, port), device: result.device)
             try IoTContext.runInDockerCompose(configFileUrl: composeRemoteLocation, envFileUrl: envFileUrl, device: result.device)
         default:
