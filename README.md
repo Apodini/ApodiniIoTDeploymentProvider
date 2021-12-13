@@ -39,7 +39,7 @@ In our 'action' target, we need to run the executable target and read the result
 If you interested in the details, feel free to check it out by yourself. The Swift-NIO-LIFX-Impl repo contains also a docker file from which you can build a docker image to pass it to the provider.
 
 Now that we created the action, we can continue by making a new target called `LifxDeploymentOption`. This will be used to define a deployment option using `Apodini.Metadata`. The option specifies the deployment target and can be used in the web service to annotate handler or groups and associate them with the deployment target. To put it in another way, all handlers/groups that are not annotate, will not be accessible on the deployed web service. Since it will be directly associated with the deployment target, it makes sense to name it somewhat similar, we will name it `lifx`. 
-```
+```swift
 extension DeploymentDevice {
     public static var lifx: Self {
         DeploymentDevice(rawValue: "lifx")
@@ -49,7 +49,7 @@ extension DeploymentDevice {
 `DeploymentDevice` is a `ComponentMetadataDefinition` that can be extended to define custom device types of `DeploymentDevice` as seen above. This approach guarantees that all defined device types are conformable to `DeploymentDevice`.
 
 In the next step, we import the created target to our web service and annotate all lifx related handlers with our new created meta data option, like this:
-```
+```swift
 Text("Should not be visible")
     .metadata(
         DeploymentDevice(.lifx)
@@ -59,7 +59,7 @@ Text("Should not be visible")
 Once we are done, we create a second target, this time executable, and call into `LifxDeploymentProvider`. This will be our actual deployment provider. To make it work, we need to import the `IoTDeploymentTarget`. The `IoTDeploymentProvider` we are about to initialise takes a couple of arguments. If you already sure about these and just want a static provider, you can just pass the hardcoded parameters, otherwise we would suggest using `SwiftArgumentParser` to allow some customization from the command line.
 Beside that we need to also import our newly created `LifxDeploymentOption` target as well as the `LifxPostDiscoveryAction` package we created in the beginning.
 After initializing the IoTDeploymentProvider property, we can call 
-```
+```swift
 provider.registerAction(
     scope: .all, 
     action: .action(LIFXDeviceDiscoveryAction.self), 
@@ -72,27 +72,27 @@ That's it! After we started the deployment, the IoT deployment provider should t
 ## Further customization
 
 As you may noticed if you have checked out the [project](https://github.com/Apodini/Swift-NIO-LIFX-Impl) containing the example action, it is possible to access the configuration of the `DeviceDiscovery` in your post discovery action by using a property wrapper like:
-```
+```swift
 @Configuration
 var username: String
 ```
 This grants access to predefined configuration properties such as `username` or `logger`
 If you like to define custom configurations, you can do so by writing an extension somewhere in the library target of the project containing your action. 
-```
+```swift
 public extension ConfigurationProperty {
 /// A `ConfigurationProperty` for the deployment directory.
     static var deploymentDirectory = ConfigurationProperty("key_deploymentDirectory")
 }
 ```
 When defining your deployment provider, pass them to the initialiser by just adding :
-```
+```swift
 additionalConfiguration: [
     .deploymentDirectory: "/usr/deployment"
 ]
 ```
 
 It is also possible to just pass a docker image as a post discovery action. Sometimes, this can be more conventient as you dont have to define a separate package and are not constraint to the Swift language.
-```
+```swift
 provider.registerAction(
     scope: .all, 
     action: .docker(
@@ -114,7 +114,7 @@ provider.registerAction(
 ```
 
 Futhermore it is possible to enable automatic redeployment. This will continously check the network after the inital deployment has finished. If there are new devices, it will automatically deploy the web service on them, if they returned positive post discovery actions results. It will also monitor the end devices and adjust the exposed endpoints accordingly. Example: A lamp was previously connected as an end devices causing the corresponding endpoints to be exposed. It left the network, thus automatic redeployment updates the web service and the endpoints are no longer accessible. It can be enable by passing
-```
+```swift
 automaticRedeployment: true
 ``` 
 when initializing an IoT deployment provider.
