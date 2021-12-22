@@ -204,18 +204,6 @@ public class IoTDeploymentProvider: DeploymentProvider { // swiftlint:disable:th
     }
     
     internal func deploy(_ result: DiscoveryResult, discovery: DeviceDiscovery) throws {
-        IoTContext.logger.debug("Cleaning up any leftover actions data in deployment directory")
-        
-        guard
-            // do nothing if there were no post actions
-            !result.foundEndDevices.isEmpty,
-            // do nothing if all post actions returned 0
-            result.foundEndDevices.values.contains(where: { $0 != 0 })
-        else {
-            IoTContext.logger.warning("No end devices were found for device \(String(describing: result.device.hostname))")
-            return
-        }
-        
         IoTContext.logger.info("Starting deployment to device \(String(describing: result.device.hostname))")
         
         let device = result.device
