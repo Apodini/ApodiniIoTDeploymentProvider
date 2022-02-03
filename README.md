@@ -27,7 +27,7 @@ If you use a raspberry pi, please make sure you have the following things set up
  - You need to have at least the Swift 5.5/ Swift 5.6 toolchain or docker installed on your raspberry pi.
 
 ## Setting up the provider
-To allow the setup for custom user-defined actions and IoT devices, the IoT DP is a developed as a shared library that offers the `IoTDeploymentProvider`. This repository contains the `IoTDeploymentProvider` and `LifxIoTDeploymentTarget` that implements the provider with the support for [LIFX](https://www.lifx.com) lamps.
+To allow the setup for custom user-defined actions and IoT devices, the IoT DP is a developed as a shared library that offers the `IoTDeploymentProvider`. This repository contains the `IoTDeploymentProvider`.
 
 Let's look at the following example to describe how the provider works and how one can set it up: Assume we have some LIFX smart lamps that are connected to our raspberry pi. We wrote a cool web service using [Apodini](https://github.com/Apodini/Apodini) that exposes among other, the functionality of the lights (e.g. on/off, control the brightness, etc.) via some endpoints. Now we want to deploy the web service to our raspberry pi using the IoT deployment provider.  
 
@@ -56,7 +56,7 @@ Text("Should not be visible")
     )
 ```
 
-Once we are done, we create a second target, this time executable, and call into `LifxDeploymentProvider`. This will be our actual deployment provider. To make it work, we need to import the `IoTDeploymentTarget`. The `IoTDeploymentProvider` we are about to initialise takes a couple of arguments. If you already sure about these and just want a static provider, you can just pass the hardcoded parameters, otherwise we would suggest using `SwiftArgumentParser` to allow some customization from the command line.
+Once we are done, we create a second target, this time executable, and call into `LifxDeploymentProvider`. This will be our actual deployment provider. To make it work, we need to import the `IoTDeploymentProvider`. The `IoTDeploymentProvider` we are about to initialise takes a couple of arguments. If you already sure about these and just want a static provider, you can just pass the hardcoded parameters, otherwise we would suggest using `SwiftArgumentParser` to allow some customization from the command line.
 Beside that we need to also import our newly created `LifxDeploymentOption` target as well as the `LifxPostDiscoveryAction` package we created in the beginning.
 After initializing the IoTDeploymentProvider property, we can call 
 ```swift
@@ -96,19 +96,19 @@ It is also possible to just pass a docker image as a post discovery action. Some
 provider.registerAction(
     scope: .all, 
     action: .docker(
-                DockerDiscoveryAction(
-                    identifier: ActionIdentifier("Lifx_Action"),
-                    imageName: "my/image:latest-test",
-                    fileUrl: URL(fileURLWithPath: "path/to/my/results/lifx_results.json"),
-                    options: [
-                        .custom("--network=host"),
-                        .port(hostPort: 56700, containerPort: 56700),
-                        .volume(hostDir: "/usr/demo", containerDir: "/app/tmp"),
-                        .credentials(username: "myUsername", password: "myPassword"),
-                        .command("/app/tmp")
-                    ]
-                )
-            ),
+        DockerDiscoveryAction(
+            identifier: ActionIdentifier("Lifx_Action"),
+            imageName: "my/image:latest-test",
+            fileUrl: URL(fileURLWithPath: "path/to/my/results/lifx_results.json"),
+            options: [
+                .custom("--network=host"),
+                .port(hostPort: 56700, containerPort: 56700),
+                .volume(hostDir: "/usr/demo", containerDir: "/app/tmp"),
+                .credentials(username: "myUsername", password: "myPassword"),
+                .command("/app/tmp")
+            ]
+        )
+    ),
     option: .device(.lifx)
 )
 ```
