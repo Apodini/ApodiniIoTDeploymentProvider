@@ -4,25 +4,24 @@
 #
 # SPDX-License-Identifier: MIT
 
-echo "Setting up Raspberry Pi for Deployment"
-echo "Updating/Upgrading everything"
-apt-get -y -q update
-apt-get -y -q upgrade
 
-echo "Installing avahi-utils"
-apt-get -y install avahi-utils
-echo "Installing avahi-daemon"
-apt-get -y install avahi-daemon
-systemctl enable avahi-daemon.service
-systemctl start avahi-daemon.service
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
 
-echo "Updating avahi config"
-publish_hinfo='yes'
-publish-workstation='yes'
-sed -i "s/^publish-hinfo=.*/publish-hinfo=yes/" /etc/avahi/avahi-daemon.conf
-sed -i "s/^publish-workstation=.*/publish-workstation=yes/" /etc/avahi/avahi-daemon.conf
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y update
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
 
-systemctl restart avahi-daemon.service
+# Download and start avahi
 
-echo "Setup complete."
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y install avahi-utils avahi-daemon
 
+sudo sed -i "s/^publish-hinfo=.*/publish-hinfo=yes/" /etc/avahi/avahi-daemon.conf
+sudo sed -i "s/^publish-workstation=.*/publish-workstation=yes/" /etc/avahi/avahi-daemon.conf
+
+sudo systemctl enable avahi-daemon.service
+sudo systemctl start avahi-daemon.service
+
+
+# Reboot
+
+sudo systemctl reboot

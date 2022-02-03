@@ -7,10 +7,10 @@
 //
 
 import Apodini
-import ApodiniDeployRuntimeSupport
+import ApodiniDeployerRuntimeSupport
 import ApodiniUtils
 import ArgumentParser
-import DeploymentTargetIoTCommon
+import IoTDeploymentProviderCommon
 import Foundation
 
 public struct IoTStructureExporterCommand<Service: WebService>: StructureExporter {

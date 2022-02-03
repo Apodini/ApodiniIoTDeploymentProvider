@@ -7,7 +7,7 @@
 //
 
 import Apodini
-import ApodiniDeployBuildSupport
+import ApodiniDeployerBuildSupport
 import ApodiniUtils
 import Foundation
 
