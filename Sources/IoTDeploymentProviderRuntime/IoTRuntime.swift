@@ -13,6 +13,11 @@ import ArgumentParser
 import IoTDeploymentProviderCommon
 import Foundation
 
+
+extension WebService {
+    public typealias IoT = IoTRuntime<Self>
+}
+
 public class IoTRuntime<Service: WebService>: DeploymentProviderRuntime {
     public static var identifier: DeploymentProviderID {
         iotDeploymentProviderId
