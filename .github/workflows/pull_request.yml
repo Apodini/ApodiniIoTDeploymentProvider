@@ -18,6 +18,8 @@ jobs:
     uses: Apodini/.github/.github/workflows/build-and-test.yml@v1
     with:
       packagename: ApodiniIoTDeploymentProvider
+      aptgetdependencies: libavahi-compat-libdnssd-dev
+      yumdependencies: avahi avahi-compat-libdns_sd avahi-compat-libdns_sd-devel
   reuse_action:
     name: REUSE Compliance Check
     uses: Apodini/.github/.github/workflows/reuse.yml@v1

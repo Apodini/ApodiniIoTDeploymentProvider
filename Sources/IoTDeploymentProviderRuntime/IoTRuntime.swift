@@ -15,6 +15,7 @@ import Foundation
 
 
 extension WebService {
+    /// The configuration for the IoT Deployment Provider
     public typealias IoT = IoTRuntime<Self>
 }
 
