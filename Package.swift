@@ -31,8 +31,8 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/Apodini/Apodini.git", .branch("develop")),
-        .package(name: "swift-device-discovery", url: "https://github.com/Apodini/SwiftDeviceDiscovery.git", .upToNextMinor(from: "0.1.0")),
+        .package(url: "https://github.com/Apodini/Apodini.git", .upToNextMinor(from: "0.9.2")),
+        .package(url: "https://github.com/Apodini/SwiftDeviceDiscovery.git", .upToNextMinor(from: "0.1.3")),
         .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMinor(from: "0.4.0"))
     ],
     targets: [
@@ -40,7 +40,7 @@ let package = Package(
             name: "IoTDeploymentProvider",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "SwiftDeviceDiscovery", package: "swift-device-discovery"),
+                .product(name: "SwiftDeviceDiscovery", package: "SwiftDeviceDiscovery"),
                 .target(name: "IoTDeploymentProviderCommon"),
                 .product(name: "ApodiniDeployerBuildSupport", package: "Apodini"),
                 .product(name: "ApodiniUtils", package: "Apodini")
