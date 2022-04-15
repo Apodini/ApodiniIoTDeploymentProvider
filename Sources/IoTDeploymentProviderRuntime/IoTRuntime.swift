@@ -7,11 +7,17 @@
 //
 
 import Apodini
-import ApodiniDeployRuntimeSupport
+import ApodiniDeployerRuntimeSupport
 import ApodiniUtils
 import ArgumentParser
-import DeploymentTargetIoTCommon
+import IoTDeploymentProviderCommon
 import Foundation
+
+
+extension WebService {
+    /// The configuration for the IoT Deployment Provider
+    public typealias IoT = IoTRuntime<Self>
+}
 
 public class IoTRuntime<Service: WebService>: DeploymentProviderRuntime {
     public static var identifier: DeploymentProviderID {
@@ -38,7 +44,7 @@ public class IoTRuntime<Service: WebService>: DeploymentProviderRuntime {
             let node = deployedSystem.node(withId: currentNodeId),
             let launchInfo = node.readUserInfo(as: IoTLaunchInfo.self)
         else {
-            throw ApodiniDeployRuntimeSupportError(
+            throw ApodiniDeployerRuntimeSupportError(
                 deploymentProviderId: Self.identifier,
                 message: "Unable to read userInfo"
             )
@@ -60,7 +66,7 @@ public class IoTRuntime<Service: WebService>: DeploymentProviderRuntime {
             let LLI = invocation.targetNode.readUserInfo(as: IoTLaunchInfo.self),
             let url = URL(string: "\(LLI.host):\(LLI.port)")
         else {
-            throw ApodiniDeployRuntimeSupportError(
+            throw ApodiniDeployerRuntimeSupportError(
                 deploymentProviderId: identifier,
                 message: "Unable to read port and construct url"
             )

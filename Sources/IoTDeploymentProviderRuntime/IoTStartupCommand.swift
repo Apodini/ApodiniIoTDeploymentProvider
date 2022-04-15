@@ -7,10 +7,10 @@
 //
 
 import Apodini
-import ApodiniDeployRuntimeSupport
+import ApodiniDeployerRuntimeSupport
 import ApodiniUtils
 import ArgumentParser
-import DeploymentTargetIoTCommon
+import IoTDeploymentProviderCommon
 import Foundation
 
 public struct IoTStartupCommand<Service: WebService>: DeploymentStartupCommand {
@@ -18,7 +18,7 @@ public struct IoTStartupCommand<Service: WebService>: DeploymentStartupCommand {
         CommandConfiguration(
             commandName: "iot",
             abstract: "Start a web service - IoT",
-            discussion: "Starts up an Apodini web service for the iot deployment",
+            discussion: "Starts up an Apodini web service for the IoT deployment",
             version: "0.0.1"
         )
     }

@@ -18,51 +18,51 @@ let package = Package(
     ],
     products: [
         .library(
-            name: "DeploymentTargetIoT",
-            targets: ["DeploymentTargetIoT"]
+            name: "IoTDeploymentProvider",
+            targets: ["IoTDeploymentProvider"]
         ),
         .library(
-            name: "DeploymentTargetIoTRuntime",
-            targets: ["DeploymentTargetIoTRuntime"]
+            name: "IoTDeploymentProviderRuntime",
+            targets: ["IoTDeploymentProviderRuntime"]
         ),
         .library(
-            name: "DeploymentTargetIoTCommon",
-            targets: ["DeploymentTargetIoTCommon"]
+            name: "IoTDeploymentProviderCommon",
+            targets: ["IoTDeploymentProviderCommon"]
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/Apodini/Apodini.git", .upToNextMinor(from: "0.6.1")),
-        .package(name: "swift-device-discovery", url: "https://github.com/Apodini/SwiftDeviceDiscovery.git", .upToNextMinor(from: "0.1.0")),
+        .package(url: "https://github.com/Apodini/Apodini.git", .upToNextMinor(from: "0.9.2")),
+        .package(url: "https://github.com/Apodini/SwiftDeviceDiscovery.git", .upToNextMinor(from: "0.1.3")),
         .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMinor(from: "0.4.0"))
     ],
     targets: [
         .target(
-            name: "DeploymentTargetIoT",
+            name: "IoTDeploymentProvider",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "SwiftDeviceDiscovery", package: "swift-device-discovery"),
-                .target(name: "DeploymentTargetIoTCommon"),
-                .product(name: "ApodiniDeployBuildSupport", package: "Apodini"),
+                .product(name: "SwiftDeviceDiscovery", package: "SwiftDeviceDiscovery"),
+                .target(name: "IoTDeploymentProviderCommon"),
+                .product(name: "ApodiniDeployerBuildSupport", package: "Apodini"),
                 .product(name: "ApodiniUtils", package: "Apodini")
             ]
         ),
         .target(
-            name: "DeploymentTargetIoTRuntime",
+            name: "IoTDeploymentProviderRuntime",
             dependencies: [
-                .product(name: "ApodiniDeployRuntimeSupport", package: "Apodini"),
-                .target(name: "DeploymentTargetIoTCommon")
+                .product(name: "ApodiniDeployerRuntimeSupport", package: "Apodini"),
+                .target(name: "IoTDeploymentProviderCommon")
             ]
         ),
         .target(
-            name: "DeploymentTargetIoTCommon",
+            name: "IoTDeploymentProviderCommon",
             dependencies: [
-                .product(name: "ApodiniDeployBuildSupport", package: "Apodini")
+                .product(name: "ApodiniDeployerBuildSupport", package: "Apodini")
             ]
         ),
         .testTarget(
-            name: "IoTDeploymentTests",
+            name: "IoTDeploymentProviderTests",
             dependencies: [
-                .target(name: "DeploymentTargetIoT")
+                .target(name: "IoTDeploymentProvider")
             ]
         )
     ]

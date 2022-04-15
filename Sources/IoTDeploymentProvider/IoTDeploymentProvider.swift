@@ -7,13 +7,13 @@
 //
 
 import Foundation
-import ApodiniDeployBuildSupport
+import ApodiniDeployerBuildSupport
 import ArgumentParser
 import DeviceDiscovery
 import Apodini
 import ApodiniUtils
 import Logging
-import DeploymentTargetIoTCommon
+import IoTDeploymentProviderCommon
 
 
 /// A deployment provider that handles the automatic deployment of a given web service to IoT devices in the network.
